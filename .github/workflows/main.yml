@@ -29,5 +29,4 @@ jobs:
 
       - name: Run tests with pytest from tests.py
         run: |
-          touch test.db
           pytest

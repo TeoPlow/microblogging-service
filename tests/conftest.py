@@ -2,7 +2,7 @@ import sys
 import os
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 print(f"Корень проекта: {project_root}")
@@ -15,7 +15,7 @@ else:
 
 print("Успешно импортирован app.main")
 
-
+from app.main import app
 images_dir = "tests/images"
 
 
