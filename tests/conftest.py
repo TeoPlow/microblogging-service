@@ -2,6 +2,7 @@ import sys
 import os
 import pytest
 from fastapi.testclient import TestClient
+from app.main import app
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 print(f"Корень проекта: {project_root}")
@@ -11,7 +12,7 @@ if project_root not in sys.path:
 else:
     print("Корень проекта уже в sys.path")
 
-from app.main import app
+
 print("Успешно импортирован app.main")
 
 
