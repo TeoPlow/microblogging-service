@@ -10,6 +10,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: service_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres" --health-interval=10s --health-timeout=5s --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
     steps:
       - uses: actions/checkout@v2
 
@@ -22,6 +41,36 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+
+      - name: Run MinIO
+        run: |
+          docker run -d --name minio \
+            -e MINIO_ROOT_USER=user \
+            -e MINIO_ROOT_PASSWORD=password \
+            -p 9000:9000 \
+            -p 9001:9001 \
+            minio/minio server /data --console-address ":9001"
+          # Ждем, пока MinIO станет доступен
+          for i in {1..10}; do
+            curl -f http://localhost:9000/minio/health/ready && break || sleep 3
+          done
+
+      - name: Run Alembic migrations
+        env:
+          DEBUG: "False"
+          API_KEY: ""
+          SQLALCHEMY_DATABASE_URL: "postgresql+asyncpg://postgres:password@localhost:5432/service_db"
+          REDIS_HOST: "localhost"
+          REDIS_PORT: "6379"
+          MINIO_ENDPOINT: "localhost:9000"
+          MINIO_URL: "http://localhost:9000"
+          MINIO_ROOT_USER: "user"
+          MINIO_ROOT_PASSWORD: "password"
+          MINIO_BUCKET_NAME: "media"
+          LOG_LEVEL: "DEBUG"
+          LOG_SAVE_TO_FILE: "True"
+        run: |
+          alembic upgrade head
 
       - name: Run linting flake8
         run: |
