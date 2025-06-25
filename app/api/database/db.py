@@ -14,13 +14,17 @@ engine: AsyncEngine = create_async_engine(
 )
 
 async_session = sessionmaker(
-    engine, expire_on_commit=False, class_=AsyncSession
+    bind=engine,
+    expire_on_commit=False,
+    class_=AsyncSession
 )
 
-session = async_session()
 Base = declarative_base()
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """
+    Асинхронный генератор для получения сессии базы данных.
+    """
     async with async_session() as session:
         yield session

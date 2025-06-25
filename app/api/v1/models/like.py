@@ -9,6 +9,9 @@ from app.api.database import Base
 
 
 class Like(Base):
+    """
+    Модель лайка.
+    """
     __tablename__ = "likes"
     tweet_id = Column(BigInteger, ForeignKey("tweets.id"), primary_key=True)
     user_id = Column(BigInteger, ForeignKey("users.id"), primary_key=True)

@@ -8,6 +8,10 @@ from app.api.database import Base
 
 
 class User(Base):
+    """
+    Модель пользователя.
+    Содержит информацию о пользователе и его взаимодействиях.
+    """
     __tablename__ = "users"
 
     id = Column(BigInteger, primary_key=True)
@@ -19,13 +23,13 @@ class User(Base):
     likes = relationship(
         "Like", back_populates="user", cascade="all, delete-orphan"
     )
-    following = relationship(
+    following_rel = relationship(
         "Follower",
         foreign_keys="Follower.follower_id",
         back_populates="follower",
         cascade="all, delete-orphan",
     )
-    followers = relationship(
+    followers_rel = relationship(
         "Follower",
         foreign_keys="Follower.user_id",
         back_populates="user",
@@ -33,9 +37,9 @@ class User(Base):
     )
 
     @property
-    def followers_users(self) -> list["User"]:
-        return [f.follower for f in self.followers]
+    def followers(self) -> list["User"]:
+        return [f.follower for f in self.followers_rel]
 
     @property
-    def following_users(self) -> list["User"]:
-        return [f.user for f in self.following]
+    def following(self) -> list["User"]:
+        return [f.user for f in self.following_rel]

@@ -4,8 +4,7 @@ from app.api.database import minio_client
 from fastapi import UploadFile
 from app.api.v1.models import Media
 from app.config import Config
-from app.api.exceptions import SomeError, InvalidApiKey
-from app.api.v1.services.users import get_user_by_api_key
+from app.api.exceptions import SomeError
 
 from app.api.utils.logger import get_logger
 
@@ -15,19 +14,15 @@ log = get_logger("MediaRouterLogger")
 async def save_media(
         file: UploadFile,
         session: AsyncSession,
-        api_key: str
 ) -> Media:
     """
     Ассинхронная функция сохранения файлов в S3 хранилище MinIO
     и добавление записей о файлах в БД.
     """
     try:
-        try:
-            await get_user_by_api_key(session, api_key)
-        except InvalidApiKey:
-            raise InvalidApiKey("Неверный API ключ, видимо вы не авторизованы")
-
         log.debug(f"Начинаю сохранять файл - file: {file.filename}")
+        if not file.filename:
+            raise SomeError("Файл не содержит имени")
         ext = file.filename.split(".")[-1]
         filename = f"{uuid.uuid4().hex}.{ext}"
 
@@ -46,7 +41,7 @@ async def save_media(
             object_name=filename,
             data=file.file,
             length=file_size,
-            content_type=file.content_type,
+            content_type=file.content_type or "application/octet-stream",
         )
 
         log.debug("Записываю информацию о файле в базу данных")
@@ -56,6 +51,7 @@ async def save_media(
         await session.refresh(media)
 
         return media
+
     except Exception as e:
         await session.rollback()
         error_message = f"Ошибка при сохранении файла: {e}"

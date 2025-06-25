@@ -1,19 +1,27 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from app.api.utils.base_responses import BaseResponse
 
 
 class SimpleUser(BaseModel):
+    """
+    Pydantic схема простого пользователя.
+    """
     id: int
     name: str
 
-    model_config = {"from_attributes": True}
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class UserOutput(BaseModel):
-    name: str
+    """
+    Pydantic схема для вывода полной информации о пользователе.
+    """
     id: int
-    followers: list[SimpleUser] = Field(..., alias="followers_users")
-    following: list[SimpleUser] = Field(..., alias="following_users")
+    name: str
+    followers: list[SimpleUser]
+    following: list[SimpleUser]
 
     model_config = {
         "from_attributes": True,

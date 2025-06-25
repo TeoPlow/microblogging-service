@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.v1.models import Follower
-from app.api.v1.services.users import get_user_by_api_key, get_user_by_id
+from app.api.v1.models import Follower, User
+from app.api.v1.services.users.get_user_by_id import get_user_by_id
 from app.api.exceptions import (
     SomeError,
     ApiException,
@@ -15,15 +15,15 @@ log = get_logger("UsersLogger")
 
 
 async def remove_follow_from_user(
-    user_id: int, session: AsyncSession, api_key: str
+    user_id: int,
+    session: AsyncSession,
+    user: User
 ):
     """
     Ассинхронная функция для удаления подписки пользователя.
     """
     try:
-        current_user = await get_user_by_api_key(session, api_key)
-
-        if current_user.id == user_id:
+        if user.id == user_id:
             raise ConflictError("Нельзя отписаться от самого себя")
 
         try:
@@ -36,7 +36,7 @@ async def remove_follow_from_user(
         result = await session.execute(
             select(Follower).where(
                 Follower.user_id == user_id,
-                Follower.follower_id == current_user.id,
+                Follower.follower_id == user.id,
             )
         )
         existing = result.scalar_one_or_none()

@@ -7,7 +7,14 @@ from alembic import context
 
 from app.api.database.db import Base
 from app.config.config import Config
-from app.api.v1.models import Media, Tweet, Like, Attachment, User, Follower
+from app.api.v1.models import (  # noqa: F401
+    Media,
+    Tweet,
+    Like,
+    Attachment,
+    User,
+    Follower
+)
 
 config = context.config
 

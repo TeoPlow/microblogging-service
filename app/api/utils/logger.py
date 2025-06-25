@@ -57,7 +57,9 @@ def configure_logger():
 
     if Config.LOG_SAVE_TO_FILE:
         handlers["file"] = {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
+            "maxBytes": 10 * 1024 * 1024,  # 10 MB
+            "backupCount": 5,
             "formatter": "file",
             "filename": "logfile.log",
             "level": Config.LOG_LEVEL,

@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Header, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.database import get_db
+from app.api.database import get_db, get_redis_client
+from app.api.v1.services.users import get_user_by_api_key
+from redis.asyncio import Redis
 from app.api.v1.schemas import (
     TweetSendRequest,
     TweetListResponse,
@@ -33,6 +35,7 @@ async def post_tweet(
     data: TweetSendRequest,
     api_key: str = Header(None, alias="api-key"),
     session: AsyncSession = Depends(get_db),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> TweetSendResponse:
     """
     Эндпоинт для отправки нового твита.
@@ -41,7 +44,9 @@ async def post_tweet(
     """
     log.debug(f"Обработка запроса на отправку твита - {data}")
 
-    tweet_id = await send_tweet(data, api_key, session)
+    user = await get_user_by_api_key(session, redis_client, api_key)
+
+    tweet_id: int = await send_tweet(data, user, session)
 
     return TweetSendResponse(tweet_id=tweet_id)
 
@@ -54,14 +59,16 @@ async def post_tweet(
 async def get_tweets(
     session: AsyncSession = Depends(get_db),
     api_key: str = Header(None, alias="api-key"),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> TweetListResponse:
     """
     Эндпоинт для получения списка твитов по подпискам.
     Возвращает словарь с результатом операции и списком твитов.
     """
     log.debug("Обработка запроса на получение списка твитов по подпискам")
+    user = await get_user_by_api_key(session, redis_client, api_key)
 
-    tweet_list = await get_tweets_from_follow(session, api_key)
+    tweet_list = await get_tweets_from_follow(session, user)
 
     return TweetListResponse(tweets=tweet_list)
 
@@ -75,6 +82,7 @@ async def delete_tweet(
     tweet_id: int,
     session: AsyncSession = Depends(get_db),
     api_key: str = Header(None, alias="api-key"),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> BaseResponse:
     """
     Эндпоинт для удаления твита по его ID.
@@ -82,8 +90,9 @@ async def delete_tweet(
     Возвращает словарь с результатом операции.
     """
     log.debug(f"Обработка запроса на удаление твита - {tweet_id}")
+    user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await delete_tweet_by_id(tweet_id, session, api_key)
+    await delete_tweet_by_id(tweet_id, session, user)
     return BaseResponse()
 
 
@@ -96,6 +105,7 @@ async def post_like(
     tweet_id: int,
     session: AsyncSession = Depends(get_db),
     api_key: str = Header(None, alias="api-key"),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> BaseResponse:
     """
     Эндпоинт для добавления лайка к твиту по его ID.
@@ -103,8 +113,9 @@ async def post_like(
     Возвращает словарь с результатом операции.
     """
     log.debug(f"Обработка запроса на добавление лайка к твиту - {tweet_id}")
+    user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await add_like_to_tweet(tweet_id, session, api_key)
+    await add_like_to_tweet(tweet_id, session, user)
 
     return BaseResponse()
 
@@ -118,6 +129,7 @@ async def delete_like(
     tweet_id: int,
     session: AsyncSession = Depends(get_db),
     api_key: str = Header(None, alias="api-key"),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> BaseResponse:
     """
     Эндпоинт для удаления лайка из твита по его ID.
@@ -125,7 +137,8 @@ async def delete_like(
     Возвращает словарь с результатом операции.
     """
     log.debug(f"Обработка запроса на удаление лайка из твита - {tweet_id}")
+    user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await remove_like_from_tweet(tweet_id, session, api_key)
+    await remove_like_from_tweet(tweet_id, session, user)
 
     return BaseResponse()

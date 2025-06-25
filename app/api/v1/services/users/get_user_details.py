@@ -19,8 +19,10 @@ async def get_user_details(session: AsyncSession, user: User) -> User:
         result = await session.execute(
             select(User)
             .options(
-                selectinload(User.followers).selectinload(Follower.follower),
-                selectinload(User.following).selectinload(Follower.user),
+                selectinload(User.followers_rel)
+                .selectinload(Follower.follower),
+                selectinload(User.following_rel)
+                .selectinload(Follower.user),
             )
             .where(User.id == user.id)
         )

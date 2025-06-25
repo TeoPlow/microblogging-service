@@ -8,7 +8,7 @@ from app.api.utils.logger import get_logger
 log = get_logger("UsersLogger")
 
 
-async def get_user_by_id(session: AsyncSession, user_id: str) -> User:
+async def get_user_by_id(session: AsyncSession, user_id: int) -> User:
     """
     Ассинхронная функция получения пользователя по его user_id
     """

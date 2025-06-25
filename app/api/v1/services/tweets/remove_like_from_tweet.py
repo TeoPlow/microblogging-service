@@ -1,7 +1,6 @@
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.v1.models import Tweet, Like
-from app.api.v1.services.users import get_user_by_api_key
+from app.api.v1.models import Tweet, Like, User
 from app.api.exceptions import SomeError, ApiException, NotFoundError
 
 from app.api.utils.logger import get_logger
@@ -10,14 +9,12 @@ log = get_logger("TweetRouterLogger")
 
 
 async def remove_like_from_tweet(
-    tweet_id: int, session: AsyncSession, api_key: str
+    tweet_id: int, session: AsyncSession, user: User
 ):
     """
     Ассинхронная функция для удаления лайка из твита.
     """
     try:
-        current_user = await get_user_by_api_key(session, api_key)
-
         tweet_result = await session.execute(
             select(Tweet).where(Tweet.id == tweet_id)
         )
@@ -27,24 +24,24 @@ async def remove_like_from_tweet(
 
         like_result = await session.execute(
             select(Like).where(
-                Like.tweet_id == tweet_id, Like.user_id == current_user.id
+                Like.tweet_id == tweet_id, Like.user_id == user.id
             )
         )
         like = like_result.scalar_one_or_none()
         if like is None:
-            raise SomeError(
-                f"Лайк от пользователя {current_user.id} не найден"
+            raise NotFoundError(
+                f"Лайк от пользователя {user.id} не найден"
             )
 
         await session.execute(
             delete(Like).where(
-                Like.tweet_id == tweet_id, Like.user_id == current_user.id
+                Like.tweet_id == tweet_id, Like.user_id == user.id
             )
         )
         await session.commit()
 
         log.debug(
-            f"Пользователь {current_user.id} удалил лайк с твита {tweet_id}"
+            f"Пользователь {user.id} удалил лайк с твита {tweet_id}"
         )
 
     except ApiException as e:

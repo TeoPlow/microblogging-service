@@ -1,8 +1,7 @@
 from app.api.v1.schemas import TweetSendRequest
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.v1.models import Media, Tweet
+from app.api.v1.models import Media, Tweet, User
 from sqlalchemy import update
-from app.api.v1.services.users import get_user_by_api_key
 from app.api.exceptions import SomeError, ApiException
 
 from app.api.utils.logger import get_logger
@@ -11,11 +10,12 @@ log = get_logger("TweetRouterLogger")
 
 
 async def send_tweet(
-    data: TweetSendRequest, api_key: str, session: AsyncSession
-):
+    data: TweetSendRequest, user: User, session: AsyncSession
+) -> int:
+    """
+    Ассинхронная функция для отправки твита.
+    """
     try:
-        user = await get_user_by_api_key(session, api_key)
-
         tweet = Tweet(content=data.tweet_data, author_id=user.id)
         session.add(tweet)
         await session.flush()
@@ -29,7 +29,7 @@ async def send_tweet(
 
         await session.commit()
 
-        return tweet.id
+        return int(tweet.id)
 
     except ApiException as e:
         raise e

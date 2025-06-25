@@ -9,6 +9,9 @@ from app.api.database import Base
 
 
 class Media(Base):
+    """
+    Модель медиа.
+    """
     __tablename__ = "medias"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)

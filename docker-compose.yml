@@ -29,8 +29,8 @@ services:
       - "9000:9000"  # API
       - "9001:9001"  # Web
     environment:
-      MINIO_ACCESS_KEY: minio_access_key
-      MINIO_SECRET_KEY: minio_secret_key
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: password
     volumes:
       - minio_data:/data
 

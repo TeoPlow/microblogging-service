@@ -10,6 +10,9 @@ from app.api.database import Base
 
 
 class Tweet(Base):
+    """
+    Модель твита.
+    """
     __tablename__ = "tweets"
 
     id = Column(BigInteger, primary_key=True)

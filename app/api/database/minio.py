@@ -4,8 +4,8 @@ from app.config import Config
 
 minio_client = Minio(
     Config.MINIO_ENDPOINT,
-    access_key=Config.MINIO_ACCESS_KEY,
-    secret_key=Config.MINIO_SECRET_KEY,
+    access_key=Config.MINIO_ROOT_USER,
+    secret_key=Config.MINIO_ROOT_PASSWORD,
     secure=False,
 )
 

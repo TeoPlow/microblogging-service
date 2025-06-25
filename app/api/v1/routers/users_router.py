@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Header, Path, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.database import get_db
+from app.api.database import get_db, get_redis_client
+from redis.asyncio import Redis
 from app.api.v1.schemas import (
     UserGetMeResponse,
     BaseResponse,
@@ -31,6 +32,7 @@ router = APIRouter()
 async def get_current_user(
     api_key: str = Header(None, alias="api-key"),
     session: AsyncSession = Depends(get_db),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> UserGetMeResponse:
     """
     Эндпоинт для получения информации о текущем пользователе по API ключу.
@@ -40,7 +42,7 @@ async def get_current_user(
         "Обработка запроса на получение информации о текущем пользователе"
     )
 
-    user: User = await get_user_by_api_key(session, api_key)
+    user: User = await get_user_by_api_key(session, redis_client, api_key)
     if not user:
         raise InvalidApiKey(f"Пользователь по API ключу '{api_key}' не найден")
 
@@ -55,7 +57,8 @@ async def get_current_user(
     responses=error_responses
 )
 async def get_one_user_by_id(
-    user_id: int = Path(...), session: AsyncSession = Depends(get_db)
+    user_id: int = Path(...),
+    session: AsyncSession = Depends(get_db),
 ) -> UserGetMeResponse:
     """
     Эндпоинт для получения информации о пользователе по его ID.
@@ -81,8 +84,9 @@ async def get_one_user_by_id(
 )
 async def post_follow(
     user_id: int,
-    session: AsyncSession = Depends(get_db),
     api_key: str = Header(None, alias="api-key"),
+    session: AsyncSession = Depends(get_db),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> BaseResponse:
     """
     Эндпоинт для добавления подписки на пользователя по его ID.
@@ -92,10 +96,11 @@ async def post_follow(
     log.debug(
         "Обработка запроса на добавление подписки на пользователя"
     )
+    user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await add_follow_to_user(user_id, session, api_key)
+    await add_follow_to_user(user_id, session, user)
 
-    return BaseResponse
+    return BaseResponse()
 
 
 @router.delete(
@@ -105,8 +110,9 @@ async def post_follow(
 )
 async def delete_follow(
     user_id: int,
-    session: AsyncSession = Depends(get_db),
     api_key: str = Header(None, alias="api-key"),
+    session: AsyncSession = Depends(get_db),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> BaseResponse:
     """
     Эндпоинт для удаления подписки на пользователя по его ID.
@@ -116,7 +122,8 @@ async def delete_follow(
     log.debug(
         "Обработка запроса на удаление подписки на пользователя"
     )
+    user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await remove_follow_from_user(user_id, session, api_key)
+    await remove_follow_from_user(user_id, session, user)
 
-    return BaseResponse
+    return BaseResponse()
