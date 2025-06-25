@@ -32,6 +32,7 @@ async def get_tweets_from_follow(
             )
         )
         following_user_ids = [row[0] for row in result.all()]
+        following_user_ids += [user.id]
 
         if not following_user_ids:
             return []
@@ -64,7 +65,7 @@ async def get_tweets_from_follow(
                     content=tweet.content,
                     attachments=[
                         (
-                            f"http://{Config.MINIO_ENDPOINT}/"
+                            f"{Config.MINIO_URL}/"
                             f"{Config.MINIO_BUCKET_NAME}/{media.filename}"
                         )
                         for media in tweet.medias

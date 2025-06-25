@@ -21,13 +21,13 @@ class Config:
 
     # Настройка хранилища медиафайлов
     MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio:9000")
+    MINIO_URL = os.getenv("MINIO_URL", "http://localhost:9000")
     MINIO_ROOT_USER = os.getenv("MINIO_ROOT_USER", "user")
     MINIO_ROOT_PASSWORD = os.getenv("MINIO_ROOT_PASSWORD", "password")
     MINIO_BUCKET_NAME = os.getenv("MINIO_BUCKET_NAME", "media")
 
     # Настройки API (ничего не делает)
     API_VERSION = os.getenv("API_VERSION", "v1")
-    API_KEY = os.getenv("API_KEY")
 
     # Настройки логирования
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()

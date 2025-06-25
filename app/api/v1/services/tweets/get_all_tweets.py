@@ -42,7 +42,7 @@ async def get_all_tweets(session: AsyncSession) -> List[TweetResponse]:
                     content=tweet.content,
                     attachments=[
                         (
-                            f"http://{Config.MINIO_ENDPOINT}/"
+                            f"{Config.MINIO_URL}/"
                             f"{Config.MINIO_BUCKET_NAME}/{media.filename}"
                         )
                         for media in tweet.medias

@@ -16,10 +16,10 @@ async def get_user_by_id(session: AsyncSession, user_id: int) -> User:
         result = await session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if not user:
-            error_message = f"Пользователь с id={user_id} не найден"
+            error_message = f"Пользователь с ID: {user_id} не найден"
             log.error(error_message)
             raise NotFoundError(error_message)
-        log.debug(f"Пользователь с id={user_id} найден")
+        log.debug(f"Пользователь с ID: {user_id} найден")
         return user
 
     except ApiException as e:

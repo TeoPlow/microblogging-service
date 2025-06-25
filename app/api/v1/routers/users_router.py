@@ -8,7 +8,6 @@ from app.api.v1.schemas import (
     error_responses
 )
 from app.api.v1.models import User
-from app.api.exceptions import InvalidApiKey, NotFoundError
 from app.api.v1.services.users import (
     get_user_by_api_key,
     get_user_by_id,
@@ -43,10 +42,8 @@ async def get_current_user(
     )
 
     user: User = await get_user_by_api_key(session, redis_client, api_key)
-    if not user:
-        raise InvalidApiKey(f"Пользователь по API ключу '{api_key}' не найден")
 
-    full_user: User = await get_user_details(session, user)
+    full_user: User = await get_user_details(session, user, redis_client)
 
     return UserGetMeResponse(user=full_user)
 
@@ -59,6 +56,7 @@ async def get_current_user(
 async def get_one_user_by_id(
     user_id: int = Path(...),
     session: AsyncSession = Depends(get_db),
+    redis_client: Redis = Depends(get_redis_client),
 ) -> UserGetMeResponse:
     """
     Эндпоинт для получения информации о пользователе по его ID.
@@ -69,10 +67,8 @@ async def get_one_user_by_id(
         "Обработка запроса на получение информации о пользователе"
     )
     user: User = await get_user_by_id(session, user_id)
-    if not user:
-        raise NotFoundError(f"Пользователь с ID: {user_id} не найден")
 
-    full_user: User = await get_user_details(session, user)
+    full_user: User = await get_user_details(session, user, redis_client)
 
     return UserGetMeResponse(user=full_user)
 
@@ -98,7 +94,7 @@ async def post_follow(
     )
     user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await add_follow_to_user(user_id, session, user)
+    await add_follow_to_user(user_id, user, session, redis_client)
 
     return BaseResponse()
 
@@ -124,6 +120,6 @@ async def delete_follow(
     )
     user = await get_user_by_api_key(session, redis_client, api_key)
 
-    await remove_follow_from_user(user_id, session, user)
+    await remove_follow_from_user(user_id, user, session, redis_client)
 
     return BaseResponse()

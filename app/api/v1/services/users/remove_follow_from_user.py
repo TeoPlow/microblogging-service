@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis
 from app.api.v1.models import Follower, User
 from app.api.v1.services.users.get_user_by_id import get_user_by_id
 from app.api.exceptions import (
@@ -16,8 +17,9 @@ log = get_logger("UsersLogger")
 
 async def remove_follow_from_user(
     user_id: int,
+    user: User,
     session: AsyncSession,
-    user: User
+    redis_client: Redis
 ):
     """
     Ассинхронная функция для удаления подписки пользователя.
@@ -45,6 +47,11 @@ async def remove_follow_from_user(
 
         await session.delete(existing)
         await session.commit()
+
+        # Очистка кеша в Redis
+        log.debug(f"Очистка кеша для пользователей {user.id} и {user_id}")
+        await redis_client.delete(f"user_details:{user.id}")
+        await redis_client.delete(f"user_details:{user_id}")
 
     except ApiException as e:
         raise e
